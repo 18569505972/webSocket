@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>点对点</title>
+</head>
+<style>
+#user1,
+#user2 {
+    display: inline-block;
+    width: 40%;
+    height: 300px;
+    overflow-y: scroll;
+    margin-left: 10px;
+    border: 1px solid #000;
+    padding: 20px;
+}
+
+.sendmsg {
+    
+}
+
+#msg1,
+#msg2 {
+    width: 60%;
+    height: 20px;
+}
+</style>
+
+<body>
+    <div id="user1">
+        <h2>user1</h2>
+        <div class="sendmsg">
+            <input type="text" id="msg1">
+            <button id="btn1">发送</button>
+        </div>
+    </div>
+    <div id="user2">
+        <h2>user2</h2>
+        <div class="sendmsg">
+            <input type="text" id="msg2">
+            <button id="btn2">发送</button>
+        </div>
+    </div>
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+let socket1 = io.connect('http://localhost:3000/user1');
+let socket2 = io.connect('http://localhost:3000/user2');
+let btn1 = document.getElementById("btn1");
+btn1.addEventListener('click', (event) => {
+    let msg = document.getElementById("msg1").value;
+    let data = { msg: msg };
+    sendElement('0',msg);
+    socket1.emit('sendMessage', data);
+});
+let btn2 = document.getElementById("btn2");
+btn2.addEventListener('click', (event) => {
+    let msg = document.getElementById("msg2").value;
+    let data = { msg: msg };
+    sendElement('1',msg);
+    socket2.emit('sendMessage', data);
+});
+socket1.on('receiveMessage', (data) => {
+    receiveElement(data,0);
+})
+socket2.on('receiveMessage', (data) => {
+    receiveElement(data,1);
+})
+function receiveElement(data,num){
+	console.log(`${data.name}`+'收到');
+    let showbox = document.getElementsByClassName('sendmsg')[num];
+    let message = document.createElement('p');
+    message.innerHTML = "<span style='color:#1ab394'>"+`${data.name}`+"</span>"+`：${data.msg}`+"<span style='margin-left:50px'>"+`${data.time}`+"</span>";
+    showbox.appendChild(message);
+}
+function sendElement(num,msg){
+    let showbox = document.getElementsByClassName('sendmsg')[num];
+    let message = document.createElement('p');
+    message.innerHTML = "<span style='color:#1ab394'>"+(num==0?"user1":"user2")+"</span>："+msg+"<span style='margin-left:50px'>"+new Date().Format("yyyy-MM-dd hh:mm")+"</span>";
+    showbox.appendChild(message);
+}
+Date.prototype.Format = function (fmt) { //author: meizz 
+    var o = {
+        "M+": this.getMonth() + 1, //月份 
+        "d+": this.getDate(), //日 
+        "h+": this.getHours(), //小时 
+        "m+": this.getMinutes(), //分 
+        "s+": this.getSeconds(), //秒 
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+        "S": this.getMilliseconds() //毫秒 
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+    if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+</script>
+
+</html>
