@@ -35,6 +35,13 @@ user1.on('connection', (socket) => {
         data.time=new Date().Format("yyyy-MM-dd hh:mm");
         user2.emit('receiveMessage', data);  
     })  
+    socket.on('sendImg', (data) => {  
+        data.id = socket.id;  
+        console.log(data)
+        data.name='user1';
+        data.time=new Date().Format("yyyy-MM-dd hh:mm");
+        user2.emit('receiveImage', data);  
+    })
 }); 
 user2.on('connection', (socket) => {  
  	socket.on('sendMessage', (data) => {  
@@ -43,4 +50,11 @@ user2.on('connection', (socket) => {
         data.time=new Date().Format("yyyy-MM-dd hhs:mm");
         user1.emit('receiveMessage', data);  
     })  
+    socket.on('sendImg', (data) => {  
+        data.id = socket.id;  
+        data.name='user2';
+        data.time=new Date().Format("yyyy-MM-dd hh:mm");
+        console.log(data)
+        user1.emit('receiveImage', data);  
+    })
 });   
