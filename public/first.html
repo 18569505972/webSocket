@@ -8,15 +8,37 @@
 <style>
 #user1,
 #user2 {
-    width: 100%;
-    height: 300px;
+    display: inline-block;
+    width: 45%;
+    height: 600px;
     overflow-y: scroll;
     margin-left: 10px;
     border: 1px solid #000;
-    padding: 20px;
+    padding: 50px 20px;
+    position: relative;
 }
 
-.sendmsg {}
+h2 {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    border-bottom:1px solid #CCC; 
+    background-color: #DDD;
+    margin: 0;
+}
+.sendmsg{
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 50px;
+    text-align: center;
+    line-height: 50px;
+    width: 100%;
+}
 
 #msg1,
 #msg2 {
@@ -53,14 +75,14 @@ let btn1 = document.getElementById("btn1");
 btn1.addEventListener('click', (event) => {
     let msg = document.getElementById("msg1").value;
     let data = { msg: msg };
-    sendElement('0', msg);
+    sendElement('0', msg,'msg');
     socket1.emit('sendMessage', data);
 });
 let btn2 = document.getElementById("btn2");
 btn2.addEventListener('click', (event) => {
     let msg = document.getElementById("msg2").value;
     let data = { msg: msg };
-    sendElement('1', msg);
+    sendElement('1', msg,'msg');
     socket2.emit('sendMessage', data);
 });
 socket1.on('receiveMessage', (data) => {
@@ -78,20 +100,32 @@ socket2.on('receiveImage', (data) => {
 //添加接受消息
 function receiveElement(data, num, type) {
     console.log(`${data.name}` + '收到');
-    let showbox = document.getElementsByClassName('sendmsg')[num];
+    if(num==0){
+        var showbox = document.getElementById('user1');
+    }else{
+        var showbox = document.getElementById('user2');
+    }
     let message = document.createElement('p');
     if(type=='img'){
-        message.innerHTML = "<span style='color:#1ab394'>" + `${data.name}` + "</span><img src='" + `${data.msg}` + "' style='100px'><span style='margin-left:50px'>" + `${data.time}` + "</span>";
+        message.innerHTML = "<span style='color:#1ab394'>" + `${data.name}` + "</span>：<img src='" + `${data.msg}` + "' style='width:100px'><span style='margin-left:50px'>" + `${data.time}` + "</span>";
     }else{
-        message.innerHTML = "<span style='color:#1ab394'>" + `${data.name}` + "</span>" + `${data.msg}` + "<span style='margin-left:50px'>" + `${data.time}` + "</span>";
+        message.innerHTML = "<span style='color:#1ab394'>" + `${data.name}` + "</span>：" + `${data.msg}` + "<span style='margin-left:50px'>" + `${data.time}` + "</span>";
     }
     showbox.appendChild(message);
 }
 //添加发送消息
-function sendElement(num, msg) {
-    let showbox = document.getElementsByClassName('sendmsg')[num];
+function sendElement(num, msg,type) {
+    if(num==0){
+        var showbox = document.getElementById('user1');
+    }else{
+        var showbox = document.getElementById('user2');
+    }
     let message = document.createElement('p');
+    if(type=='msg'){
     message.innerHTML = "<span style='color:#1ab394'>" + (num == 0 ? "user1" : "user2") + "</span>：" + msg + "<span style='margin-left:50px'>" + new Date().Format("yyyy-MM-dd hh:mm") + "</span>";
+}else{
+    message.innerHTML = "<span style='color:#1ab394'>" + (num == 0 ? "user1" : "user2") + "</span>：<img src='" + msg + "' style='width:100px' class='imgAdd '><span style='margin-left:50px'>" + new Date().Format("yyyy-MM-dd hh:mm") + "</span>";
+}
     showbox.appendChild(message);
 }
 //日期格式化
@@ -131,7 +165,7 @@ function getImgData(e) {
         alert("文件必须为图片！");
         return false;
     }
-    if (file.size > 1024 * 1024 * 8) {
+    if (file.size > 1024 * 1024 * 5) {
         alert("文件不能超过8M！");
         return false;
     }
@@ -140,17 +174,16 @@ function getImgData(e) {
     reader.readAsDataURL(file);
     reader.onload = function(e) {
         img.src=e.target.result;
-        img.width=200;
-        img.id="img";
-        //document.body.appendChild(img)
-        //var image=document.getElementById("img");
-        let data = { msg: e.target.result };
-        //document.getElementById('img').remove();
+        img.width=100;
         if(imgClick==1){
-            socket1.emit('sendImg', data);
+            sendElement('0',e.target.result,'img')
         }else{
-            socket2.emit('sendImg', data);
+            sendElement('1',e.target.result,'img')
         }
+        var image=document.getElementsByClassName("imgAdd")[document.getElementsByClassName("imgAdd").length-1];
+        setTimeout(function(){
+            compress(image)
+        },500)
     }
     reader.onerror=function(e){
     	
@@ -164,24 +197,10 @@ function compress(img) {
     // 图片原始尺寸
     var originWidth = img.width;
     var originHeight = img.height;
+    var scale = originWidth / originHeight;
     // 最大尺寸限制
-    var maxWidth = 400,
-        maxHeight = 400;
-    // 目标尺寸
-    var targetWidth = originWidth,
-        targetHeight = originHeight;
-    // 图片尺寸超过400x400的限制
-    if (originWidth > maxWidth || originHeight > maxHeight) {
-        if (originWidth / originHeight > maxWidth / maxHeight) {
-            // 更宽，按照宽度限定尺寸
-            targetWidth = maxWidth;
-            targetHeight = Math.round(maxWidth * (originHeight / originWidth));
-        } else {
-            targetHeight = maxHeight;
-            targetWidth = Math.round(maxHeight * (originWidth / originHeight));
-        }
-    }
-
+    var targetWidth = 100;
+        targetHeight =  parseInt(targetWidth / scale);
     // canvas对图片进行缩放
     canvas.width = targetWidth;
     canvas.height = targetHeight;
@@ -190,7 +209,17 @@ function compress(img) {
     // 图片压缩
     context.drawImage(img, 0, 0, targetWidth, targetHeight);
     // canvas转为blob并上传
-    return canvas.toDataURL('image/jpeg', 0.8);
+    var dataURL=canvas.toDataURL('image/jpeg', 0.8)
+    var data = { msg: dataURL };
+    if(imgClick==1){
+        socket1.emit('sendImg', data);
+    }else{
+        socket2.emit('sendImg', data);
+    }
+    var fileClear = document.getElementById('file');
+    fileClear.value = ''; //虽然file的value不能设为有字符的值，但是可以设置为空值
+    //或者
+    //file.outerHTML = file.outerHTML; //重新初始化了file的html
 }
 </script>
 
