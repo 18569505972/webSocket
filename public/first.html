@@ -54,6 +54,7 @@ h2 {
             <input type="text" id="msg1">
             <button id="btn1">发送</button>
             <button id="img1" onclick="getImg('1')">图片</button>
+            <input type="text" speech x-webkit-speech onwebkitspeechchange="alert(this.value)" />
         </div>
     </div>
     <input type="file" id="file" style="display: none" onchange="getImgData(event)">
